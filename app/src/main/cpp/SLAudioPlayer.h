@@ -5,6 +5,14 @@
 #ifndef FFMPEGAUDIOPLAYER_SLAUDIOPLAYER_H
 #define FFMPEGAUDIOPLAYER_SLAUDIOPLAYER_H
 
+#include <iostream>
+#include <stdlib.h>
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
+#include "IAudioDataProvider.h"
+
+using namespace std;
 
 class SLAudioPlayer {
 public:
@@ -14,6 +22,29 @@ public:
     void releasePlayer();
     bool play();
     bool stop();
+
+    void setDataProvider(IAudioDataProvider *provider);
+    void removeDataProvider(IAudioDataProvider *provider);
+
+private:
+    SLObjectItf engineObject = NULL;
+    SLEngineItf engineEngine;
+
+    SLObjectItf outputMixObject = NULL;
+
+
+    SLObjectItf playerObject = NULL;
+    SLPlayItf playerPlay;
+
+    SLAndroidSimpleBufferQueueItf playerBufferQueue;
+
+    void processAudio(SLAndroidSimpleBufferQueueItf bq, void *context);
+
+    IAudioDataProvider *dataProvider = NULL;
+
+    IAudioDataProvider *spareDataProvider = NULL;
+
+    bool removeAudioDataProviderFlag = false;
 
 };
 
