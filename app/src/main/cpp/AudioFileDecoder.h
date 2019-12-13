@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <iostream>
 #include <thread>
+#include <condition_variable>
+#include <deque>
+
 
 #include "IAudioDataProvider.h"
 #include "Commons.h"
@@ -29,9 +32,13 @@ extern "C"
 #include "FFmpeg/libavcodec/avfft.h"
 #include "FFmpeg/libswresample/swresample.h"
 #include "FFmpeg/libavcodec/avcodec.h"
+#include "FFmpeg/libavutil/frame.h"
+#include "FFmpeg/libavutil/channel_layout.h"
 }
 
 using namespace std;
+
+#define MAX_SAMPLE_COUNT 512
 
 typedef struct {
     long currentPosition;
@@ -43,38 +50,66 @@ enum DecodeState
 {
     NORMAL,
     NEED_READ_FIRST,
-    NEED_NEW_PACKET
+    NEED_NEW_PACKET,
+    FINISHED
 };
 
 class AudioFileDecoder: IAudioDataProvider {
 public:
-
+    AudioFileDecoder();
+    ~AudioFileDecoder();
     void getAudioData(int16_t *audio_data, int *sampleCount);
     bool openFile(string filePath);
     long getDuration();
     long getCurrentPosition();
-    uint8_t *picBuffer = NULL;
+    bool jumpToPosition(long position);
+
 
 private:
-    int32_t bufferLength = BUFFER_SIZE;
+    string currentFile = NULL;
+
+    bool initComponent();
+    void resetComponent();
+
+    void decode();
+
+    thread *decodeThread = NULL;
+
     int32_t bufferCount = 10;
 
     AVFormatContext *formatContext = NULL;
-    int streamIndex = -1;
+    int audioIndex = -1;
     AVStream *audioStream = NULL;
     AVCodecContext *codecContext = NULL;
+    AVCodec *decoder = NULL;
 
-    int32_t in_sample_rate = 0, out_sample_rate = 0;
-    int32_t in_channels = 0, out_channels = 0;
-    AVSampleFormat in_sample_fmt, out_sample_fmt;
-    uint64_t in_channel_layout = 0, out_channel_layout = 0;
+    uint8_t *picBuffer = NULL;
+    int picBufferLen = 0;
+
+    int32_t in_sample_rate = 0;
+    int32_t in_channels = 0;
+    AVSampleFormat in_sample_fmt;
+    uint64_t in_channel_layout = 0;
+
+    int64_t duration = 0;
+    int64_t currentPosition = 0;
+
+    static const int32_t out_sample_rate = 44100;
+    static const int32_t out_channels = 2;
+    static const AVSampleFormat out_sample_fmt = AV_SAMPLE_FMT_S16;
+    static const uint64_t out_channel_layout = AV_CH_LAYOUT_STEREO;
 
     SwrContext *swrContext = NULL;
 
+    AVPacket *packet = NULL;
+    AVFrame *frame = NULL;
 
+    mutex mu;
+    condition_variable cond;
 
+    deque<PCMBufferNode *> bufferDeque;
 
-
+    DecodeState decodeState;
 };
 
 
