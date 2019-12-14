@@ -39,6 +39,9 @@ extern "C"
 using namespace std;
 
 #define MAX_SAMPLE_COUNT 512
+#define BUFFER_QUEUE_SIZE 10
+#define USED_BUFFER_QUEUE_SIZE 2
+
 
 typedef struct {
     long currentPosition;
@@ -73,7 +76,12 @@ private:
 
     void decode();
 
+    void startDecode();
+    void stopDecode();
+
     thread *decodeThread = NULL;
+
+    bool stopDecodeFlag = false;
 
     int32_t bufferCount = 10;
 
@@ -104,10 +112,13 @@ private:
     AVPacket *packet = NULL;
     AVFrame *frame = NULL;
 
-    mutex mu;
-    condition_variable cond;
+    mutex threadStateMu;
+    mutex bufferMu;
+    mutex usedBufferMu;
+    condition_variable dataCond;
 
     deque<PCMBufferNode *> bufferDeque;
+    deque<PCMBufferNode *> usedBufferDeque;
 
     DecodeState decodeState;
 };

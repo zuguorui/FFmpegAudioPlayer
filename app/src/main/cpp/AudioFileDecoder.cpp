@@ -147,7 +147,7 @@ bool AudioFileDecoder::initComponent() {
 
     frame = av_frame_alloc();
 
-    decodeThread = new thread(decode);
+
 
 
 }
@@ -195,7 +195,122 @@ void AudioFileDecoder::resetComponent() {
         delete(decodeThread);
         decodeThread = NULL;
     }
-    
 
+
+}
+
+void AudioFileDecoder::startDecode() {
+    if(codecContext == NULL || decoder == NULL || swrContext == NULL || packet == NULL || frame == NULL)
+    {
+        LOGE("Component not init complete, can not start decode");
+        return;
+    }
+    stopDecodeFlag = false;
+    decodeThread = new thread(decode);
+}
+
+void AudioFileDecoder::stopDecode() {
+    threadStateMu.lock();
+    if(decodeThread != NULL && decodeState != DecodeState::FINISHED)
+    {
+        stopDecodeFlag = true;
+        decodeThread->join();
+    }
+    threadStateMu.unlock();
+    free(decodeThread);
+    decodeThread = NULL;
+}
+
+long AudioFileDecoder::getCurrentPosition() {
+    return currentPosition;
+}
+
+long AudioFileDecoder::getDuration() {
+    return duration;
+}
+
+void AudioFileDecoder::getAudioData(int16_t *audio_data, int *sampleCount) {
+
+}
+
+void AudioFileDecoder::decode() {
+    bool shouldFinish = false;
+    int err = 0;
+    while(1)
+    {
+        if(decodeState != NEED_READ_FIRST)
+        {
+            if(av_read_frame(formatContext, packet) < 0)
+            {
+                //Can not read more data from file
+                break;
+            }
+        }
+
+        if(packet->pts > audioStream->start_time)
+        {
+            err = avcodec_send_packet(codecContext, packet);
+            if(err == AVERROR(EAGAIN))
+            {
+                /*
+                 * codec buffer is full, need to call avcodec_receive_frame() first and then send this packet
+                 * again.
+                 * */
+                decodeState = NEED_READ_FIRST;
+            }else if(err == 0)
+            {
+                //Normal
+                decodeState = NORMAL;
+            }else if(err == AVERROR_EOF)
+            {
+                //End of file
+            }else if(err == AVERROR(EINVAL))
+            {
+
+            }else
+            {
+                LOGD("call avcodec_send_packet() returns %d\n", err);
+            }
+
+            while(1)
+            {
+                err = avcodec_receive_frame(codecContext, frame);
+                if(err == AVERROR(EAGAIN))
+                {
+                    //Can not read until send a new packet
+                    break;
+                }
+                else if(err == AVERROR_EOF)
+                {
+                    //The codec is flushed, no more frame will be output
+                    break;
+                }else if(err == AVERROR(EINVAL))
+                {
+                    break;
+                }else if(err == 0)
+                {
+                    /*
+                     * success, a frame is returned. Now we should get a PCMBufferNode.
+                     * At first, we should check the size of usedBufferDeque. if
+                     * usedBufferDeque.size < USED_BUFFER_QUEUE_SIZE, we should allocate
+                     * a new PCMBufferNode, or we can pull a used PCMBufferNode from
+                     * usedBufferDeque.
+                     * */
+                    PCMBufferNode *node = NULL;
+                    usedBufferMu.lock();
+                    if(usedBufferDeque.size() < USED_BUFFER_QUEUE_SIZE)
+                    {
+                        node = new PCMBufferNode();
+                        node->buffer = (int16_t *)malloc(MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
+                    }else{
+                        node = usedBufferDeque.front();
+                        usedBufferDeque.pop_front();
+                    }
+
+                }
+            }
+        }
+
+    }
 }
 
