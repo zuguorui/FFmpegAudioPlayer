@@ -253,11 +253,20 @@ void AudioFileDecoder::decode() {
                     //success, we should read data from swresaple
                     PCMBufferNode *node = getFreeNode();
                     uint8_t * tempBuffer = (uint8_t *) (node->buffer);
-                    int frameCount = swr_convert(swrContext, &((uint8_t *)(node->buffer)),
+                    node->sampleCount = swr_convert(swrContext, &(tempBuffer),
                                                  MAX_SAMPLE_COUNT, (const uint8_t **) frame->data,
                                                  frame->nb_samples);
+                    if(node->sampleCount < 0)
+                    {
+                        putNodeToUsedDeque(node);
+                    }else{
+                        putNodeToDeque(node);
+                    }
+                    //if the input frame count is greater than out buffer size, we need to read for times.
+                    while(1)
+                    {
 
-
+                    }
                 }
             }
         }
@@ -284,5 +293,15 @@ PCMBufferNode *AudioFileDecoder::getFreeNode() {
     }
     usedBufferMu.unlock();
     return node;
+}
+
+PCMBufferNode* AudioFileDecoder::getDataNode() {
+    PCMBufferNode *node = NULL;
+    unique_lock<mutex> locker(bufferMu);
+    while(bufferDeque.size() == 0)
+    {
+        dataCond.wait(locker);
+
+    }
 }
 

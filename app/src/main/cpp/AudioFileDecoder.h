@@ -76,7 +76,10 @@ private:
 
     void decode();
 
-    PCMBufferNode* getFreeNode();
+    inline PCMBufferNode* getFreeNode();
+    inline PCMBufferNode* getDataNode();
+    inline void putNodeToDeque(PCMBufferNode *node);
+    inline void putNodeToUsedDeque(PCMBufferNode *node);
 
     void startDecode();
     void stopDecode();
