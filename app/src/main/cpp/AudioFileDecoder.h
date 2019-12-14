@@ -76,6 +76,8 @@ private:
 
     void decode();
 
+    PCMBufferNode* getFreeNode();
+
     void startDecode();
     void stopDecode();
 
