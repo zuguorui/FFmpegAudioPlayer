@@ -20,6 +20,8 @@ class MainActivity : AppCompatActivity() {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
+    external fun nCreatePlayer()
+
 
     companion object {
 

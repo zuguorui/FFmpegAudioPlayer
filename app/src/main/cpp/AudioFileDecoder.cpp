@@ -5,7 +5,7 @@
 #include "AudioFileDecoder.h"
 #include <android/log.h>
 
-#define MODULE_NAME  "SLAudioPlayer"
+#define MODULE_NAME  "AudioFileDecoder"
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, MODULE_NAME, __VA_ARGS__)
@@ -18,6 +18,21 @@ AudioFileDecoder::AudioFileDecoder() {
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
+    stopDecode();
+    PCMBufferNode *toDeleteNode = NULL;
+    while(buffers.size() > 0)
+    {
+        toDeleteNode = buffers.front();
+        buffers.pop_front();
+        delete(toDeleteNode);
+    }
+
+    while(usedBuffers.size() > 0)
+    {
+        toDeleteNode = usedBuffers.front();
+        usedBuffers.pop_front();
+        delete(toDeleteNode);
+    }
 
 }
 
@@ -30,7 +45,28 @@ bool AudioFileDecoder::openFile(string filePath) {
     currentFile = filePath;
     resetComponent();
     result = initComponent();
+    if(result)
+    {
+        startDecode();
+    }
+
     return result;
+}
+
+void AudioFileDecoder::closeInput() {
+    stopDecode();
+    resetComponent();
+
+}
+
+void AudioFileDecoder::seekTo(int64_t position) {
+    if(position > duration)
+    {
+        LOGE("seek to position %ld is larger than duration %ld", position, duration);
+        return;
+    }
+    seekTarget = position;
+    seekReq = true;
 }
 
 bool AudioFileDecoder::initComponent() {
@@ -187,12 +223,12 @@ void AudioFileDecoder::startDecode() {
 }
 
 void AudioFileDecoder::stopDecode() {
-    threadStateMu.lock();
+
     if (decodeThread != NULL && decodeState != DecodeState::FINISHED) {
         stopDecodeFlag = true;
-        decodeThread->join();
+        decodeThread->join();//join the thread and wait it to finished by itself.
     }
-    threadStateMu.unlock();
+
     free(decodeThread);
     decodeThread = NULL;
 }
@@ -206,16 +242,37 @@ long AudioFileDecoder::getDuration() {
 }
 
 void AudioFileDecoder::getAudioData(int16_t *audio_data, int *sampleCount) {
+    if(usingNode != NULL)
+    {
+        putNodeToUsedDeque(usingNode);
+    }
+    usingNode = getDataNode();
+    audio_data = usingNode->buffer;
+    *sampleCount = usingNode->sampleCount;
+    currentPosition = usingNode->currentPosition;
 
 }
 
 void AudioFileDecoder::decode() {
-    bool shouldFinish = false;
+
     int err = 0;
     while (1) {
+
+        if(stopDecodeFlag)
+        {
+            break;
+        }
+        if(seekReq)
+        {
+            seekReq = false;
+            discardDecodedBuffers();
+            av_seek_frame(formatContext, audioIndex, seekTarget, 0);
+        }
+
         if (decodeState != NEED_READ_FIRST) {
             if (av_read_frame(formatContext, packet) < 0) {
                 //Can not read more data from file
+
                 break;
             }
         }
@@ -265,43 +322,92 @@ void AudioFileDecoder::decode() {
                     //if the input frame count is greater than out buffer size, we need to read for times.
                     while(1)
                     {
-
+                        node = getFreeNode();
+                        tempBuffer = (uint8_t *)(node->buffer);
+                        node->sampleCount = swr_convert(swrContext, &(tempBuffer), MAX_SAMPLE_COUNT, (const uint8_t **)frame->data, frame->nb_samples);
+                        if(node->sampleCount < 0)
+                        {
+                            putNodeToUsedDeque(node);
+                            break;
+                        }else{
+                            putNodeToDeque(node);
+                        }
                     }
                 }
             }
         }
 
+        if(decodeState != NEED_READ_FIRST)
+        {
+            av_packet_unref(packet);
+        }
+
     }
+    decodeState = FINISHED;
 }
 
 /*
-* At first, we should check the size of usedBufferDeque. if
-* usedBufferDeque.size < USED_BUFFER_QUEUE_SIZE, we should allocate
+* At first, we should check the size of usedBuffers. if
+* usedBuffers.size < USED_BUFFER_QUEUE_SIZE, we should allocate
 * a new PCMBufferNode, or we can pull a used PCMBufferNode from
-* usedBufferDeque.
+* usedBuffers.
 * */
 PCMBufferNode *AudioFileDecoder::getFreeNode() {
 
     PCMBufferNode *node = NULL;
-    usedBufferMu.lock();
-    if (usedBufferDeque.size() < USED_BUFFER_QUEUE_SIZE) {
+    unique_lock<mutex> locker(usedBufferMu);
+    if (usedBuffers.size() < USED_BUFFER_QUEUE_SIZE) {
         node = new PCMBufferNode();
         node->buffer = (int16_t *) malloc(MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
     } else {
-        node = usedBufferDeque.front();
-        usedBufferDeque.pop_front();
+        node = usedBuffers.front();
+        usedBuffers.pop_front();
     }
-    usedBufferMu.unlock();
+    locker.unlock();
     return node;
 }
 
 PCMBufferNode* AudioFileDecoder::getDataNode() {
     PCMBufferNode *node = NULL;
     unique_lock<mutex> locker(bufferMu);
-    while(bufferDeque.size() == 0)
+    while(buffers.size() == 0)
     {
-        dataCond.wait(locker);
-
+        notEmptySignal.wait(locker);
     }
+    node = buffers.front();
+    buffers.pop_front();
+    notFullSignal.notify_all();
+    locker.unlock();
+    return node;
+}
+
+void AudioFileDecoder::putNodeToDeque(PCMBufferNode *node) {
+    unique_lock<mutex> locker(bufferMu);
+    while(buffers.size() >= BUFFER_QUEUE_SIZE)
+    {
+        notFullSignal.wait(locker);
+    }
+    buffers.push_back(node);
+    notEmptySignal.notify_all();
+    locker.unlock();
+}
+
+void AudioFileDecoder::putNodeToUsedDeque(PCMBufferNode *node) {
+    unique_lock<mutex> locker(usedBufferMu);
+    usedBuffers.push_back(node);
+    locker.unlock();
+}
+
+void AudioFileDecoder::discardDecodedBuffers() {
+    unique_lock<mutex> locker(bufferMu);
+
+    list<PCMBufferNode *>::iterator it = buffers.begin();
+    while(it != buffers.end())
+    {
+        usedBuffers.push_back(*it);
+        it++;
+    }
+    buffers.clear();
+    locker.unlock();
 }
 

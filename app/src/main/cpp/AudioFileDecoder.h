@@ -9,7 +9,7 @@
 #include <iostream>
 #include <thread>
 #include <condition_variable>
-#include <deque>
+#include <list>
 
 
 #include "IAudioDataProvider.h"
@@ -63,9 +63,10 @@ public:
     ~AudioFileDecoder();
     void getAudioData(int16_t *audio_data, int *sampleCount);
     bool openFile(string filePath);
+    void closeInput();
     long getDuration();
     long getCurrentPosition();
-    bool jumpToPosition(long position);
+    void seekTo(int64_t position);
 
 
 private:
@@ -84,11 +85,11 @@ private:
     void startDecode();
     void stopDecode();
 
+    inline void discardDecodedBuffers();
     thread *decodeThread = NULL;
 
     bool stopDecodeFlag = false;
 
-    int32_t bufferCount = 10;
 
     AVFormatContext *formatContext = NULL;
     int audioIndex = -1;
@@ -120,12 +121,17 @@ private:
     mutex threadStateMu;
     mutex bufferMu;
     mutex usedBufferMu;
-    condition_variable dataCond;
+    condition_variable notFullSignal;
+    condition_variable notEmptySignal;
 
-    deque<PCMBufferNode *> bufferDeque;
-    deque<PCMBufferNode *> usedBufferDeque;
+    list<PCMBufferNode *> buffers;
+    list<PCMBufferNode *> usedBuffers;
+    PCMBufferNode *usingNode = NULL;
 
     DecodeState decodeState;
+
+    int64_t seekTarget = 0;
+    bool seekReq = false;
 };
 
 

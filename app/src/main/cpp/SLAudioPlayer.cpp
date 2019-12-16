@@ -5,12 +5,12 @@
 #include "SLAudioPlayer.h"
 
 #define MODULE_NAME  "SLAudioPlayer"
-#define LOGV(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__);}
-#define LOGD(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__);}
-#define LOGI(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_INFO, MODULE_NAME, __VA_ARGS__);}
-#define LOGW(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_WARN, MODULE_NAME, __VA_ARGS__);}
-#define LOGE(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__);}
-#define LOGF(showLog, ...) if((showLog)) {__android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__);}
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, MODULE_NAME, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, MODULE_NAME, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
+#define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
 
 SLAudioPlayer::SLAudioPlayer() {
 
@@ -124,7 +124,12 @@ bool SLAudioPlayer::createPlayer() {
     }
     (void*)result;
 
-    processAudio(playerBufferQueue, this);
+    int fakeBufferLen = 10;
+    int16_t *fakeBuffer = (int16_t *)malloc(fakeBufferLen * sizeof(int16_t));
+    memset(fakeBuffer, 0, fakeBufferLen * sizeof(int16_t));
+    (*playerBufferQueue)->Enqueue(playerBufferQueue, fakeBuffer, fakeBufferLen * sizeof(int16_t));
+    free(fakeBuffer);
+
     return true;
 }
 
