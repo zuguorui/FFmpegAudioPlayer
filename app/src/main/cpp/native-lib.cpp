@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <android/log.h>
+#include <sstream>
 #include "AudioFilePlayer.h"
 
 #define MODULE_NAME  "native-lib"
@@ -40,9 +41,12 @@ Java_com_zu_ffmpegaudioplayer_MainActivity_nOpenFile(JNIEnv *env, jobject *insta
         return false;
     }
     const char *pathChars = env->GetStringUTFChars(filePath, NULL);
+    stringstream ss;
+    ss << pathChars;
+    string pathStr;
+    ss >> pathStr;
+    return player->openFile(pathStr);
 
-    player = new AudioFilePlayer();
-    return true;
 }
 
 
