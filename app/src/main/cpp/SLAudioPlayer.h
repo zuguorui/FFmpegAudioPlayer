@@ -26,6 +26,7 @@ public:
     void setDataProvider(IAudioDataProvider *provider);
     void removeDataProvider(IAudioDataProvider *provider);
 
+    void processAudio();
 private:
     SLObjectItf engineObject = NULL;
     SLEngineItf engineEngine;
@@ -38,7 +39,7 @@ private:
 
     SLAndroidSimpleBufferQueueItf playerBufferQueue;
 
-    void processAudio(SLAndroidSimpleBufferQueueItf bq, void *context);
+
 
     IAudioDataProvider *dataProvider = NULL;
 

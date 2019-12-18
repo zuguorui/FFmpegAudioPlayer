@@ -16,24 +16,24 @@
 #include "Commons.h"
 extern "C"
 {
-#include "FFmpeg/libavutil/avstring.h"
-#include "FFmpeg/libavutil/eval.h"
-#include "FFmpeg/libavutil/mathematics.h"
-#include "FFmpeg/libavutil/pixdesc.h"
-#include "FFmpeg/libavutil/imgutils.h"
-#include "FFmpeg/libavutil/dict.h"
-#include "FFmpeg/libavutil/parseutils.h"
-#include "FFmpeg/libavutil/samplefmt.h"
-#include "FFmpeg/libavutil/avassert.h"
-#include "FFmpeg/libavutil/time.h"
-#include "FFmpeg/libavformat/avformat.h"
-#include "FFmpeg/libswscale/swscale.h"
-#include "FFmpeg/libavutil/opt.h"
-#include "FFmpeg/libavcodec/avfft.h"
-#include "FFmpeg/libswresample/swresample.h"
-#include "FFmpeg/libavcodec/avcodec.h"
-#include "FFmpeg/libavutil/frame.h"
-#include "FFmpeg/libavutil/channel_layout.h"
+#include "libavutil/avstring.h"
+#include "libavutil/eval.h"
+#include "libavutil/mathematics.h"
+#include "libavutil/pixdesc.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/dict.h"
+#include "libavutil/parseutils.h"
+#include "libavutil/samplefmt.h"
+#include "libavutil/avassert.h"
+#include "libavutil/time.h"
+#include "libavformat/avformat.h"
+#include "libswscale/swscale.h"
+#include "libavutil/opt.h"
+#include "libavcodec/avfft.h"
+#include "libswresample/swresample.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/frame.h"
+#include "libavutil/channel_layout.h"
 }
 
 using namespace std;
@@ -57,7 +57,7 @@ enum DecodeState
     FINISHED
 };
 
-class AudioFileDecoder: IAudioDataProvider {
+class AudioFileDecoder: public IAudioDataProvider {
 public:
     AudioFileDecoder();
     ~AudioFileDecoder();
@@ -67,15 +67,15 @@ public:
     long getDuration();
     long getCurrentPosition();
     void seekTo(int64_t position);
-
+    void decode();
 
 private:
-    string currentFile = NULL;
+    string currentFile = "";
 
     bool initComponent();
     void resetComponent();
 
-    void decode();
+
 
     inline PCMBufferNode* getFreeNode();
     inline PCMBufferNode* getDataNode();

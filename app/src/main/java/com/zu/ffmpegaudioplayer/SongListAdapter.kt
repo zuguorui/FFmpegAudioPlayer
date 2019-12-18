@@ -6,6 +6,19 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.zu.ffmpegaudioplayer.data.AudioFile
+import java.text.SimpleDateFormat
+
+fun formatDuration(duration: Int): String
+{
+    val totalSeconds: Int = (duration / 1000)
+    val totalMinutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    val minutes = totalMinutes % 60
+    val hours = totalMinutes / 60
+
+
+    return if(hours != 0) "$minutes:$seconds" else "$hours:$minutes:$seconds"
+}
 
 class SongListAdapter: RecyclerView.Adapter<SongListItem>()
 {
@@ -25,14 +38,21 @@ class SongListAdapter: RecyclerView.Adapter<SongListItem>()
     }
 
     override fun onBindViewHolder(holder: SongListItem, position: Int) {
+        if(data == null || position >= data!!.size)
+        {
+            return
+        }
+
+        holder.tvName.text = data!![position].audioName
+        holder.tvDuration.text = formatDuration(data!![position].duration!!)
 
     }
 }
 
 class SongListItem(itemView: View): RecyclerView.ViewHolder(itemView)
 {
-    lateinit var tvName: TextView
-    lateinit var tvDuration: TextView
+    var tvName: TextView
+    var tvDuration: TextView
     init {
         tvName = itemView.findViewById(R.id.tv_name)
         tvDuration = itemView.findViewById(R.id.tv_duration)

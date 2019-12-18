@@ -12,6 +12,33 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
 #define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
 
+void audio_callback(SLAndroidSimpleBufferQueueItf bq, void *context)
+{
+    SLAudioPlayer *player = (SLAudioPlayer *)context;
+    player->processAudio();
+}
+
+void SLAudioPlayer::processAudio() {
+
+    if(spareDataProvider != NULL)
+    {
+        dataProvider = spareDataProvider;
+        spareDataProvider = NULL;
+    }
+    if(removeAudioDataProviderFlag)
+    {
+        removeAudioDataProviderFlag = false;
+        dataProvider = NULL;
+    }
+    if(dataProvider != NULL)
+    {
+        int16_t *data = NULL;
+        int num_samples = 0;
+        dataProvider->getAudioData(data, &num_samples);
+        (*playerBufferQueue)->Enqueue(playerBufferQueue, data, num_samples * 2 * sizeof(int16_t));
+    }
+}
+
 SLAudioPlayer::SLAudioPlayer() {
 
 }
@@ -103,7 +130,7 @@ bool SLAudioPlayer::createPlayer() {
     }
     (void*)result;
 
-    result = (*playerBufferQueue)->RegisterCallback(playerBufferQueue, processAudio, this);
+    result = (*playerBufferQueue)->RegisterCallback(playerBufferQueue, audio_callback, this);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
@@ -184,23 +211,7 @@ void SLAudioPlayer::removeDataProvider(IAudioDataProvider *provider) {
     }
 }
 
-void SLAudioPlayer::processAudio(SLAndroidSimpleBufferQueueItf bq, void *context) {
-    if(spareDataProvider != NULL)
-    {
-        dataProvider = spareDataProvider;
-        spareDataProvider = NULL;
-    }
-    if(removeAudioDataProviderFlag)
-    {
-        removeAudioDataProviderFlag = false;
-        dataProvider = NULL;
-    }
-    if(dataProvider != NULL)
-    {
-        int16_t *data = NULL;
-        int num_samples = 0;
-        dataProvider->getAudioData(data, &num_samples);
-        (*playerBufferQueue)->Enqueue(playerBufferQueue, data, num_samples * 2 * sizeof(int16_t));
-    }
-}
+
+
+
 

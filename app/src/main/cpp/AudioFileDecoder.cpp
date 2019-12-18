@@ -13,6 +13,12 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
 #define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
 
+void thread_callback(void *context)
+{
+    AudioFileDecoder *decoder = (AudioFileDecoder *)context;
+    decoder->decode();
+}
+
 AudioFileDecoder::AudioFileDecoder() {
     avcodec_register_all();
 }
@@ -37,7 +43,7 @@ AudioFileDecoder::~AudioFileDecoder() {
 }
 
 bool AudioFileDecoder::openFile(string filePath) {
-    if (filePath == NULL) {
+    if (filePath.length() == 0) {
         LOGE("file path is NULL");
         return false;
     }
@@ -70,7 +76,7 @@ void AudioFileDecoder::seekTo(int64_t position) {
 }
 
 bool AudioFileDecoder::initComponent() {
-    if (currentFile == NULL) {
+    if (currentFile.length() == 0) {
         return false;
     }
     formatContext = avformat_alloc_context();
@@ -123,7 +129,7 @@ bool AudioFileDecoder::initComponent() {
     audioStream = formatContext->streams[audioIndex];
 
     duration = audioStream->duration;
-    LOGD("Audio duration = %d", duration);
+    LOGD("Audio duration = %ld", duration);
 
     decoder = avcodec_find_decoder(audioStream->codecpar->codec_id);
     if (decoder == NULL) {
@@ -219,7 +225,7 @@ void AudioFileDecoder::startDecode() {
         return;
     }
     stopDecodeFlag = false;
-    decodeThread = new thread(decode);
+    decodeThread = new thread(thread_callback, this);
 }
 
 void AudioFileDecoder::stopDecode() {
