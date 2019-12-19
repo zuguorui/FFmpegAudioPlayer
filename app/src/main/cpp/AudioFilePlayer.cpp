@@ -35,7 +35,7 @@ AudioFilePlayer::~AudioFilePlayer() {
     }
 }
 
-bool AudioFilePlayer::openFile(string filePath) {
+bool AudioFilePlayer::openFile(const char *filePath) {
     if(audioPlayer == NULL)
     {
         LOGE("audioPlayer is NULL");

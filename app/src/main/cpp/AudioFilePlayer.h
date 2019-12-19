@@ -16,7 +16,7 @@ class AudioFilePlayer {
 public:
     AudioFilePlayer();
     ~AudioFilePlayer();
-    bool openFile(string filePath);
+    bool openFile(const char *filePath);
     void closeInput();
 
     bool startPlay();

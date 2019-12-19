@@ -36,7 +36,7 @@ using namespace std;
 #define MAX_SAMPLE_COUNT 512
 #define BUFFER_QUEUE_SIZE 10
 #define USED_BUFFER_QUEUE_SIZE 2
-
+#define FILE_NAME_LEN 100
 
 typedef struct {
     long currentPosition;
@@ -57,7 +57,7 @@ public:
     AudioFileDecoder();
     ~AudioFileDecoder();
     void getAudioData(int16_t *audio_data, int *sampleCount);
-    bool openFile(string filePath);
+    bool openFile(const char* filePath);
     void closeInput();
     long getDuration();
     long getCurrentPosition();
@@ -65,7 +65,7 @@ public:
     void decode();
 
 private:
-    string currentFile = "";
+    char *currentFile = NULL;
 
     bool initComponent();
     void resetComponent();

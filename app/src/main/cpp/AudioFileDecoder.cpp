@@ -21,6 +21,8 @@ void thread_callback(void *context)
 
 AudioFileDecoder::AudioFileDecoder() {
     avcodec_register_all();
+    currentFile = (char *)malloc(FILE_NAME_LEN * sizeof(char));
+    memset(currentFile, 0, FILE_NAME_LEN * sizeof(char));
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
@@ -40,21 +42,29 @@ AudioFileDecoder::~AudioFileDecoder() {
         delete(toDeleteNode);
     }
 
+    if(currentFile != NULL)
+    {
+        free(currentFile);
+    }
+
 }
 
-bool AudioFileDecoder::openFile(string filePath) {
-    if (filePath.length() == 0) {
+bool AudioFileDecoder::openFile(const char *filePath) {
+    if (filePath == NULL) {
         LOGE("file path is NULL");
         return false;
     }
     bool result = true;
-    currentFile = filePath;
+    strcpy(currentFile, filePath);
     resetComponent();
     result = initComponent();
+
     if(result)
     {
+        LOGD("initComponent succeed");
         startDecode();
     }else{
+        LOGE("initComponent failed");
         resetComponent();
     }
 
@@ -78,9 +88,7 @@ void AudioFileDecoder::seekTo(int64_t position) {
 }
 
 bool AudioFileDecoder::initComponent() {
-    if (currentFile.length() == 0) {
-        return false;
-    }
+    LOGD("to open file %s", currentFile);
 
     frame = av_frame_alloc();
     formatContext = avformat_alloc_context();
@@ -89,7 +97,7 @@ bool AudioFileDecoder::initComponent() {
         return false;
     }
 
-    if (avformat_open_input(&formatContext, currentFile.c_str(), NULL, NULL) < 0) {
+    if (avformat_open_input(&formatContext, currentFile, NULL, NULL) < 0) {
         LOGE("Open file failed");
         return false;
     }
