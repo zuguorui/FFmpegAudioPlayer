@@ -57,21 +57,21 @@ bool SLAudioPlayer::createPlayer() {
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     SLInterfaceID ids1[1] = {SL_IID_OUTPUTMIX};
     SLboolean reqs1[1] = {SL_BOOLEAN_FALSE};
@@ -80,14 +80,14 @@ bool SLAudioPlayer::createPlayer() {
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     // Create player
     SLDataLocator_AndroidSimpleBufferQueue bufferQueue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
@@ -107,49 +107,49 @@ bool SLAudioPlayer::createPlayer() {
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*playerObject)->Realize(playerObject, SL_BOOLEAN_FALSE);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*playerObject)->GetInterface(playerObject, SL_IID_PLAY, &playerPlay);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*playerObject)->GetInterface(playerObject, SL_IID_BUFFERQUEUE, &playerBufferQueue);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     result = (*playerBufferQueue)->RegisterCallback(playerBufferQueue, audio_callback, this);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
 //    result = (*playerObject)->GetInterface(playerObject, SL_IID_VOLUME, &bqPlayerVolume);
 //    if(result != SL_RESULT_SUCCESS)
 //    {
 //        return false;
 //    }
-//    (void*)result;
+
 
     result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_PAUSED);
     if(result != SL_RESULT_SUCCESS)
     {
         return false;
     }
-    (void*)result;
+
 
     int fakeBufferLen = 10;
     int16_t *fakeBuffer = (int16_t *)malloc(fakeBufferLen * sizeof(int16_t));

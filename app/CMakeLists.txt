@@ -6,8 +6,9 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 file(GLOB CPP_FILES "src/main/cpp/*.cpp")
-include_directories("src/main/cpp/FFmpeg")
-include_directories("src/main/cpp/iconv")
+include_directories("src/main/cpp/FFmpeg/")
+include_directories("src/main/cpp/")
+
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -36,6 +37,12 @@ find_library( # Sets the name of the path variable.
         # you want CMake to locate.
         log)
 
+find_library(
+        z-lib
+
+        z
+)
+
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
@@ -48,11 +55,11 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavfilter.a
+        z
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavformat.a
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavfilter.a
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavcodec.a
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavutil.a
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswresample.a
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswscale.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavcodec.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libiconv.so
         )

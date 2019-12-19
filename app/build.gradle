@@ -16,8 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags '-fPIC', '-std=c++11', '-v'
-                cFlags '-fPIC', '-v'
+                cppFlags '-std=c++11'
             }
         }
         ndk {

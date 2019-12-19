@@ -9,7 +9,7 @@
 
 class IAudioDataProvider {
 public:
-    virtual void getAudioData(int16_t *audioData, int *sampleCount);
+    virtual void getAudioData(int16_t *audioData, int *sampleCount) = 0;
 };
 
 
