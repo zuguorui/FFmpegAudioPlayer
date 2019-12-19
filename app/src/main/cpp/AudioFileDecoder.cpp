@@ -54,6 +54,8 @@ bool AudioFileDecoder::openFile(string filePath) {
     if(result)
     {
         startDecode();
+    }else{
+        resetComponent();
     }
 
     return result;
@@ -79,6 +81,8 @@ bool AudioFileDecoder::initComponent() {
     if (currentFile.length() == 0) {
         return false;
     }
+
+    frame = av_frame_alloc();
     formatContext = avformat_alloc_context();
     if (formatContext == NULL) {
         LOGE("Alloc format context failed");
@@ -172,9 +176,6 @@ bool AudioFileDecoder::initComponent() {
 
     packet = (AVPacket *) av_malloc(sizeof(AVPacket));
     av_init_packet(packet);
-
-    frame = av_frame_alloc();
-
 
 }
 
