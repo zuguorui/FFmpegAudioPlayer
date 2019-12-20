@@ -189,6 +189,7 @@ bool AudioFileDecoder::initComponent() {
     LOGD("input info: \n    sample rate = %d\n    channel layout = %ld\n    channels = %d\n    sample fmt = %d",
          in_sample_rate, in_channel_layout, in_channels, in_sample_fmt);
 
+    swrContext = swr_alloc();
 
     swrContext = swr_alloc_set_opts(swrContext, out_channel_layout, out_sample_fmt, out_sample_rate,
                                     in_channel_layout, in_sample_fmt, in_sample_rate, 0, NULL);
@@ -287,6 +288,7 @@ void AudioFileDecoder::getAudioData(int16_t *audio_data, int *sampleCount) {
 void AudioFileDecoder::decode() {
 
     int err = 0;
+    bool readFileFinished = false;
     while (1) {
 
         if(stopDecodeFlag)
@@ -300,69 +302,70 @@ void AudioFileDecoder::decode() {
             av_seek_frame(formatContext, audioIndex, seekTarget, 0);
         }
 
+
         if (decodeState != NEED_READ_FIRST) {
             if (av_read_frame(formatContext, packet) < 0) {
                 //Can not read more data from file
 
-                break;
+                LOGD("finished to read file");
+                readFileFinished = true;
+                packet->size = 0;
             }
         }
 
-        if (packet->pts > audioStream->start_time) {
-            err = avcodec_send_packet(codecContext, packet);
+        err = avcodec_send_packet(codecContext, packet);
+        if (err == AVERROR(EAGAIN)) {
+            /*
+             * codec buffer is full, need to call avcodec_receive_frame() first and then send this packet
+             * again.
+             * */
+            decodeState = NEED_READ_FIRST;
+        } else if (err == 0) {
+            //Normal
+            decodeState = NORMAL;
+        } else if (err == AVERROR_EOF) {
+            //End of file
+        } else if (err == AVERROR(EINVAL)) {
+
+        } else {
+            LOGD("call avcodec_send_packet() returns %d\n", err);
+        }
+
+        while (1) {
+            err = avcodec_receive_frame(codecContext, frame);
             if (err == AVERROR(EAGAIN)) {
-                /*
-                 * codec buffer is full, need to call avcodec_receive_frame() first and then send this packet
-                 * again.
-                 * */
-                decodeState = NEED_READ_FIRST;
-            } else if (err == 0) {
-                //Normal
-                decodeState = NORMAL;
+                //Can not read until send a new packet
+                break;
             } else if (err == AVERROR_EOF) {
-                //End of file
+                //The codec is flushed, no more frame will be output
+                break;
             } else if (err == AVERROR(EINVAL)) {
-
-            } else {
-                LOGD("call avcodec_send_packet() returns %d\n", err);
-            }
-
-            while (1) {
-                err = avcodec_receive_frame(codecContext, frame);
-                if (err == AVERROR(EAGAIN)) {
-                    //Can not read until send a new packet
-                    break;
-                } else if (err == AVERROR_EOF) {
-                    //The codec is flushed, no more frame will be output
-                    break;
-                } else if (err == AVERROR(EINVAL)) {
-                    break;
-                } else if (err == 0) {
-                    //success, we should read data from swresaple
-                    PCMBufferNode *node = getFreeNode();
-                    uint8_t * tempBuffer = (uint8_t *) (node->buffer);
-                    node->sampleCount = swr_convert(swrContext, &(tempBuffer),
-                                                 MAX_SAMPLE_COUNT, (const uint8_t **) frame->data,
-                                                 frame->nb_samples);
+                break;
+            } else if (err == 0) {
+                //success, we should read data from swresaple
+                PCMBufferNode *node = getFreeNode();
+                uint8_t * tempBuffer = (uint8_t *) (node->buffer);
+                node->sampleCount = swr_convert(swrContext, &(tempBuffer),
+                                                MAX_SAMPLE_COUNT, (const uint8_t **) frame->data,
+                                                frame->nb_samples);
+                if(node->sampleCount < 0)
+                {
+                    putNodeToUsedDeque(node);
+                }else{
+                    putNodeToDeque(node);
+                }
+                //if the input frame count is greater than out buffer size, we need to read for times.
+                while(1)
+                {
+                    node = getFreeNode();
+                    tempBuffer = (uint8_t *)(node->buffer);
+                    node->sampleCount = swr_convert(swrContext, &(tempBuffer), MAX_SAMPLE_COUNT, (const uint8_t **)frame->data, frame->nb_samples);
                     if(node->sampleCount < 0)
                     {
                         putNodeToUsedDeque(node);
+                        break;
                     }else{
                         putNodeToDeque(node);
-                    }
-                    //if the input frame count is greater than out buffer size, we need to read for times.
-                    while(1)
-                    {
-                        node = getFreeNode();
-                        tempBuffer = (uint8_t *)(node->buffer);
-                        node->sampleCount = swr_convert(swrContext, &(tempBuffer), MAX_SAMPLE_COUNT, (const uint8_t **)frame->data, frame->nb_samples);
-                        if(node->sampleCount < 0)
-                        {
-                            putNodeToUsedDeque(node);
-                            break;
-                        }else{
-                            putNodeToDeque(node);
-                        }
                     }
                 }
             }
@@ -371,6 +374,11 @@ void AudioFileDecoder::decode() {
         if(decodeState != NEED_READ_FIRST)
         {
             av_packet_unref(packet);
+        }
+
+        if (readFileFinished)
+        {
+            break;
         }
 
     }
