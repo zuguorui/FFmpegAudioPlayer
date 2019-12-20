@@ -19,10 +19,22 @@ void thread_callback(void *context)
     decoder->decode();
 }
 
+void log_callback(void *avcl, int level, const char *fmt, va_list args)
+{
+    if(level == AV_LOG_ERROR)
+    {
+        LOGE(fmt, args);
+    }else{
+        LOGD(fmt, args);
+    }
+
+}
+
 AudioFileDecoder::AudioFileDecoder() {
     avcodec_register_all();
     currentFile = (char *)malloc(FILE_NAME_LEN * sizeof(char));
     memset(currentFile, 0, FILE_NAME_LEN * sizeof(char));
+    av_log_set_callback(log_callback);
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
@@ -55,7 +67,9 @@ bool AudioFileDecoder::openFile(const char *filePath) {
         return false;
     }
     bool result = true;
+    memset(currentFile, 0, FILE_NAME_LEN * sizeof(char));
     strcpy(currentFile, filePath);
+    LOGD("open file %s", currentFile);
     resetComponent();
     result = initComponent();
 
@@ -91,6 +105,10 @@ bool AudioFileDecoder::initComponent() {
     LOGD("to open file %s", currentFile);
 
     frame = av_frame_alloc();
+
+    packet = (AVPacket *) av_malloc(sizeof(AVPacket));
+    av_init_packet(packet);
+
     formatContext = avformat_alloc_context();
     if (formatContext == NULL) {
         LOGE("Alloc format context failed");
@@ -107,7 +125,6 @@ bool AudioFileDecoder::initComponent() {
         return false;
     }
 
-    av_format_inject_global_side_data(formatContext);
 
     audioIndex = -1;
 
@@ -182,8 +199,7 @@ bool AudioFileDecoder::initComponent() {
 
     swr_init(swrContext);
 
-    packet = (AVPacket *) av_malloc(sizeof(AVPacket));
-    av_init_packet(packet);
+
 
 }
 
