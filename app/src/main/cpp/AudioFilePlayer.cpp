@@ -44,6 +44,7 @@ bool AudioFilePlayer::openFile(const char *filePath) {
     if(decoder != NULL)
     {
         return decoder->openFile(filePath);
+//        return false;
     }else{
         LOGE("decoder is NULL");
         return false;

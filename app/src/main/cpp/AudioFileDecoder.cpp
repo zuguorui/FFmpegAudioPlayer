@@ -35,6 +35,8 @@ AudioFileDecoder::AudioFileDecoder() {
     currentFile = (char *)malloc(FILE_NAME_LEN * sizeof(char));
     memset(currentFile, 0, FILE_NAME_LEN * sizeof(char));
     av_log_set_callback(log_callback);
+    const char *version = av_version_info();
+    LOGD("FFmpeg version: %s", version);
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
@@ -62,6 +64,7 @@ AudioFileDecoder::~AudioFileDecoder() {
 }
 
 bool AudioFileDecoder::openFile(const char *filePath) {
+
     if (filePath == NULL) {
         LOGE("file path is NULL");
         return false;
