@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         adapter.itemClickListener = {
             position: Int ->
             nOpenFile(songList!![position].path)
-            nStartPlay()
+//            nStartPlay()
         }
 
         Observable.fromCallable {

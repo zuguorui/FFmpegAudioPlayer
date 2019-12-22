@@ -62,7 +62,7 @@ class SongListAdapter: RecyclerView.Adapter<SongListItem>()
             return
         }
 
-        holder.tvName.text = data!![position].audioName
+        holder.tvName.text = data!![position].fileName
         holder.tvDuration.text = formatDuration(data!![position].duration!!)
         holder.itemView.tag = position
 

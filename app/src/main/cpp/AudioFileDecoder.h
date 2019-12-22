@@ -10,7 +10,6 @@
 #include <thread>
 #include <condition_variable>
 #include <list>
-#include <zlib.h>
 
 #include "IAudioDataProvider.h"
 #include "Commons.h"

@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.4.1)
 file(GLOB CPP_FILES "src/main/cpp/*.cpp")
 include_directories("src/main/cpp/FFmpeg/")
 include_directories("src/main/cpp/")
+include_directories("src/main/cpp/iconv/")
 
 
 # Creates and names a library, sets it as either STATIC
@@ -37,16 +38,10 @@ find_library( # Sets the name of the path variable.
         # you want CMake to locate.
         log)
 
-find_library(
-        z-lib
-
-        z
-)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
-file(GLOB static_lib_files "${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/*.a")
 
 target_link_libraries( # Specifies the target library.
         native-lib
@@ -56,10 +51,15 @@ target_link_libraries( # Specifies the target library.
         # included in the NDK.
         ${log-lib}
         z
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavformat.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavfilter.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavcodec.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavutil.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswresample.a
-        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswscale.a
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libcharset.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libiconv.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libfdk-aac.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libmp3lame.so
+#        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libx264.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavformat.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavfilter.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavcodec.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libavutil.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswresample.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libswscale.so
         )

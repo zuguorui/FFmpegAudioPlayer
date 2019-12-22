@@ -76,7 +76,7 @@ bool AudioFileDecoder::openFile(const char *filePath) {
     if(result)
     {
         LOGD("initComponent succeed");
-        startDecode();
+//        startDecode();
     }else{
         LOGE("initComponent failed");
         resetComponent();
@@ -181,9 +181,15 @@ bool AudioFileDecoder::initComponent() {
         return false;
     }
 
-    in_sample_rate = audioStream->codecpar->sample_rate;
-    in_channel_layout = audioStream->codecpar->channel_layout;
-    in_channels = audioStream->codecpar->channels;
+    if(codecContext->channel_layout == 0)
+    {
+        LOGE("input channel_layout == 0");
+        codecContext->channel_layout = av_get_default_channel_layout(codecContext->channels);
+    }
+
+    in_sample_rate = codecContext->sample_rate;
+    in_channel_layout = codecContext->channel_layout;
+    in_channels = codecContext->channels;
     in_sample_fmt = codecContext->sample_fmt;
 
     LOGD("input info: \n    sample rate = %d\n    channel layout = %ld\n    channels = %d\n    sample fmt = %d",
