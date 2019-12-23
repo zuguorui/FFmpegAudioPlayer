@@ -37,6 +37,15 @@ AudioFileDecoder::AudioFileDecoder() {
     av_log_set_callback(log_callback);
     const char *version = av_version_info();
     LOGD("FFmpeg version: %s", version);
+    char info[10000] = {0};
+    sprintf(info, "FFmpeg codec configure: %s", avcodec_configuration());
+    LOGD("%s", info);
+    memset(info, 0, 10000 * sizeof(char));
+    sprintf(info, "FFmpeg format configure: %s", avformat_configuration());
+    LOGD("%s", info);
+    memset(info, 0, 10000 * sizeof(char));
+    sprintf(info, "FFmpeg util configure: %s", avutil_configuration());
+    LOGD("%s", info);
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
