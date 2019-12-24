@@ -5,6 +5,8 @@
 #include "AudioFileDecoder.h"
 #include <android/log.h>
 
+
+
 #define MODULE_NAME  "AudioFileDecoder"
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
@@ -13,7 +15,7 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
 #define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
 
-void thread_callback(void *context)
+static void thread_callback(void *context)
 {
     AudioFileDecoder *decoder = (AudioFileDecoder *)context;
     decoder->decode();

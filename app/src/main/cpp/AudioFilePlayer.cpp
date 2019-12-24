@@ -15,9 +15,9 @@
 
 AudioFilePlayer::AudioFilePlayer() {
     decoder = new AudioFileDecoder();
-    audioPlayer = new SLAudioPlayer();
-    audioPlayer->setDataProvider(decoder);
-    audioPlayer->createPlayer();
+//    audioPlayer = new SLAudioPlayer();
+//    audioPlayer->setDataProvider(decoder);
+//    audioPlayer->createPlayer();
 }
 
 AudioFilePlayer::~AudioFilePlayer() {
@@ -36,15 +36,14 @@ AudioFilePlayer::~AudioFilePlayer() {
 }
 
 bool AudioFilePlayer::openFile(const char *filePath) {
-    if(audioPlayer == NULL)
-    {
-        LOGE("audioPlayer is NULL");
-        return false;
-    }
+//    if(audioPlayer == NULL)
+//    {
+//        LOGE("audioPlayer is NULL");
+//        return false;
+//    }
     if(decoder != NULL)
     {
         return decoder->openFile(filePath);
-//        return false;
     }else{
         LOGE("decoder is NULL");
         return false;
@@ -61,36 +60,38 @@ void AudioFilePlayer::closeInput() {
 }
 
 bool AudioFilePlayer::startPlay() {
-    if(audioPlayer != NULL && decoder != NULL)
-    {
-        return audioPlayer->play();
-    }else if(audioPlayer == NULL){
-        LOGE("audioPlayer is NULL");
-        return false;
-    }else{
-        LOGE("decoder is NULL");
-        return false;
-    }
+//    if(audioPlayer != NULL && decoder != NULL)
+//    {
+//        return audioPlayer->play();
+//    }else if(audioPlayer == NULL){
+//        LOGE("audioPlayer is NULL");
+//        return false;
+//    }else{
+//        LOGE("decoder is NULL");
+//        return false;
+//    }
+
+    return false;
 }
 
 void AudioFilePlayer::stopPlay() {
-    if(audioPlayer != NULL && decoder != NULL)
-    {
-        audioPlayer->stop();
-    }else if(audioPlayer == NULL){
-        LOGE("audioPlayer is NULL");
-    }else{
-        LOGE("decoder is NULL");
-    }
+//    if(audioPlayer != NULL && decoder != NULL)
+//    {
+//        audioPlayer->stop();
+//    }else if(audioPlayer == NULL){
+//        LOGE("audioPlayer is NULL");
+//    }else{
+//        LOGE("decoder is NULL");
+//    }
 }
 
 void AudioFilePlayer::seekTo(int64_t position) {
-    if(audioPlayer != NULL && decoder != NULL)
-    {
-        decoder->seekTo(position);
-    }else if(audioPlayer == NULL){
-        LOGE("audioPlayer is NULL");
-    }else{
-        LOGE("decoder is NULL");
-    }
+//    if(audioPlayer != NULL && decoder != NULL)
+//    {
+//        decoder->seekTo(position);
+//    }else if(audioPlayer == NULL){
+//        LOGE("audioPlayer is NULL");
+//    }else{
+//        LOGE("decoder is NULL");
+//    }
 }
