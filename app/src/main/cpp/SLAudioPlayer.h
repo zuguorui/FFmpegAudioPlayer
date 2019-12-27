@@ -11,6 +11,7 @@
 #include <SLES/OpenSLES_Android.h>
 
 #include "IAudioDataProvider.h"
+#include "Commons.h"
 
 using namespace std;
 
@@ -46,6 +47,8 @@ private:
     IAudioDataProvider *spareDataProvider = NULL;
 
     bool removeAudioDataProviderFlag = false;
+
+    int16_t *buffer = NULL;
 
 };
 

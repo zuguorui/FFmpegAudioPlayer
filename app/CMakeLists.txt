@@ -51,8 +51,8 @@ target_link_libraries( # Specifies the target library.
         # included in the NDK.
         ${log-lib}
         z
-#        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libcharset.so
-#        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libiconv.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libcharset.so
+        ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libiconv.so
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libfdk-aac.so
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libmp3lame.so
         ${CMAKE_SOURCE_DIR}/jniLibs/${ANDROID_ABI}/libx264.x.so

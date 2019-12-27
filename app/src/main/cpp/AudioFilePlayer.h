@@ -8,7 +8,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "SLAudioPlayer.h"
-#include "AudioFileDecoder.h"
+#include "AudioFileDecoder2.h"
 
 using namespace std;
 
@@ -24,7 +24,7 @@ public:
     void seekTo(int64_t position);
 
 private:
-    AudioFileDecoder *decoder = NULL;
+    AudioFileDecoder2 *decoder = NULL;
     SLAudioPlayer *audioPlayer = NULL;
 };
 

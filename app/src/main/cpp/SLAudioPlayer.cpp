@@ -5,12 +5,8 @@
 #include "SLAudioPlayer.h"
 
 #define MODULE_NAME  "SLAudioPlayer"
-#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, MODULE_NAME, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, MODULE_NAME, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
-#define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
 
 void audio_callback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
@@ -32,19 +28,23 @@ void SLAudioPlayer::processAudio() {
     }
     if(dataProvider != NULL)
     {
-        int16_t *data = NULL;
+
         int num_samples = 0;
-        dataProvider->getAudioData(data, &num_samples);
-        (*playerBufferQueue)->Enqueue(playerBufferQueue, data, num_samples * 2 * sizeof(int16_t));
+        memset(buffer, 0, MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
+        dataProvider->getAudioData(buffer, &num_samples);
+        (*playerBufferQueue)->Enqueue(playerBufferQueue, buffer, num_samples * 2 * sizeof(int16_t));
     }
 }
 
 SLAudioPlayer::SLAudioPlayer() {
-
+    buffer = (int16_t *)malloc(MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
 }
 
 SLAudioPlayer::~SLAudioPlayer() {
-
+    if(buffer != NULL)
+    {
+        free(buffer);
+    }
 }
 
 bool SLAudioPlayer::createPlayer() {
@@ -151,11 +151,9 @@ bool SLAudioPlayer::createPlayer() {
     }
 
 
-    int fakeBufferLen = 10;
-    int16_t *fakeBuffer = (int16_t *)malloc(fakeBufferLen * sizeof(int16_t));
-    memset(fakeBuffer, 0, fakeBufferLen * sizeof(int16_t));
-    (*playerBufferQueue)->Enqueue(playerBufferQueue, fakeBuffer, fakeBufferLen * sizeof(int16_t));
-    free(fakeBuffer);
+
+    (*playerBufferQueue)->Enqueue(playerBufferQueue, buffer, MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
+
 
     return true;
 }
