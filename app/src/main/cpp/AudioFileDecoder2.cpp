@@ -18,7 +18,7 @@ static void thread_callback(void *context, const char *file)
 }
 
 AudioFileDecoder2::AudioFileDecoder2() {
-
+    av_register_all();
 }
 
 AudioFileDecoder2::~AudioFileDecoder2() {
@@ -40,14 +40,18 @@ void AudioFileDecoder2::openFile(const char *inputFile) {
 void AudioFileDecoder2::closeInput() {
     if(decodeThread != NULL && decodeThread->joinable())
     {
+        LOGE("decode thread running... join it to wait finish by itself");
         stopFlag = true;
         decodeThread->join();
+        resetComponents();
     }
     decodeThread = NULL;
+
+    stopFlag = false;
 }
 
 bool AudioFileDecoder2::initComponents(const char* inputFileName) {
-    av_register_all();
+
 
     int err = 0;
 
@@ -166,6 +170,10 @@ bool AudioFileDecoder2::initComponents(const char* inputFileName) {
     return true;
 }
 
+/*
+ * Don't call this function if decode thread is running. I don't know why if call this
+ * at init stage, initing components will crash with SIGNAL FAULT.
+ * */
 void AudioFileDecoder2::resetComponents() {
     if(convertCtx != NULL)
     {
@@ -214,6 +222,10 @@ void AudioFileDecoder2::decode() {
     bool readFinished = false;
     while (1)
     {
+        if(stopFlag)
+        {
+            break;
+        }
         if (decode_state != NEED_READ_FIRST)
         {
             int err1 = av_read_frame(formatCtx, packet);
@@ -225,30 +237,29 @@ void AudioFileDecoder2::decode() {
             }
         }
 
-        // LOGE("presention time = %ld\n", pkt_pts);
         int err2 = avcodec_send_packet(codecCtx, packet);
         if (err2 == AVERROR(EAGAIN))
         {
             //Need to call avcodec_receive_frame() first, and then resend
             //this packet.
             decode_state = NEED_READ_FIRST;
-            LOGE("call send_packet() returns AVERROR(EAGAIN)\n");
+//            LOGE("call send_packet() returns AVERROR(EAGAIN)\n");
         }
         else if (err2 == AVERROR_EOF)
         {
-            LOGE("call send_packet() returns AVERROR_EOF\n");
+//            LOGE("call send_packet() returns AVERROR_EOF\n");
         }
         else if (err2 == AVERROR(EINVAL))
         {
-            LOGE("call send_packet() returns AVERROR(EINVAL)\n");
+//            LOGE("call send_packet() returns AVERROR(EINVAL)\n");
         }
         else if (err2 < 0)
         {
-            LOGE("call send_packet() returns %d\n", err2);
+//            LOGE("call send_packet() returns %d\n", err2);
         }
         else
         {
-            LOGE("call send_packet() normal, returns %d\n", err2);
+//            LOGE("call send_packet() normal, returns %d\n", err2);
             decode_state = NORMAL;
         }
 
@@ -259,27 +270,27 @@ void AudioFileDecoder2::decode() {
             {
                 //Can not read until send a new packet
 
-                LOGE("call avcodec_receive_frame() returns AVERROR(EAGAIN)\n");
+//                LOGE("call avcodec_receive_frame() returns AVERROR(EAGAIN)\n");
                 break;
             }
             else if (err3 == AVERROR_EOF)
             {
-                LOGE("call avcodec_receive_frame() returns AVERROR_EOF\n");
+//                LOGE("call avcodec_receive_frame() returns AVERROR_EOF\n");
                 break;
             }
             else if (err3 == AVERROR(EINVAL))
             {
-                LOGE("call avcodec_receive_frame() returns AVERROR(EINVAL)\n");
+//                LOGE("call avcodec_receive_frame() returns AVERROR(EINVAL)\n");
                 break;
             }
             else if (err3 < 0)
             {
-                LOGE("call avcodec_receive_frame() returns %d\n", err3);
+//                LOGE("call avcodec_receive_frame() returns %d\n", err3);
                 break;
             }
             else
             {
-                LOGE("success receive a frame\n");
+//                LOGE("success receive a frame\n");
 
                 int frameCount = swr_convert(convertCtx, &out_buffer, MAX_SAMPLE_COUNT, (const uint8_t **)frame->data, frame->nb_samples);
 
@@ -308,7 +319,7 @@ void AudioFileDecoder2::decode() {
                     bufferLock.lock();
                     if(buffers.size() >= BUFFER_QUEUE_SIZE)
                     {
-                        LOGE("buffer is full, waiting...");
+//                        LOGE("buffer is full, waiting...");
                         notFullSignal.wait(bufferLock);
                     }
                     buffers.push_back(node);
@@ -345,7 +356,7 @@ void AudioFileDecoder2::decode() {
                         bufferLock.lock();
                         if(buffers.size() >= BUFFER_QUEUE_SIZE)
                         {
-                            LOGE("buffer is full, waiting...");
+//                            LOGE("buffer is full, waiting...");
                             notFullSignal.wait(bufferLock);
                         }
                         buffers.push_back(node);
@@ -382,7 +393,7 @@ void AudioFileDecoder2::getAudioData(int16_t *audioData, int *sampleCount) {
     unique_lock<mutex> bufferLock(bufferMu);
     if(buffers.size() == 0)
     {
-        LOGE("buffer is empty, waiting...");
+//        LOGE("buffer is empty, waiting...");
         notEmptySignal.wait(bufferLock);
     }
     PCMBufferNode *node = buffers.front();
