@@ -6,12 +6,10 @@
 #include "AudioFilePlayer.h"
 
 #define MODULE_NAME  "AudioFilePlayer"
-#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, MODULE_NAME, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, MODULE_NAME, __VA_ARGS__)
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, MODULE_NAME, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, MODULE_NAME, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, MODULE_NAME, __VA_ARGS__)
-#define LOGF(...) __android_log_print(ANDROID_LOG_FATAL, MODULE_NAME, __VA_ARGS__)
+
+
 
 AudioFilePlayer::AudioFilePlayer() {
     decoder = new AudioFileDecoder2();
@@ -43,7 +41,15 @@ bool AudioFilePlayer::openFile(const char *filePath) {
     }
     if(decoder != NULL)
     {
-        decoder->openFile(filePath);
+        if(currentFile != NULL)
+        {
+            free(currentFile);
+        }
+        int nameLen = strlen(filePath);
+        currentFile = (char *)malloc(nameLen * sizeof(char));
+        memset(currentFile, 0, nameLen * sizeof(char));
+        strcpy(currentFile, filePath);
+        decoder->openFile(currentFile);
         return true;
     }else{
         LOGE("decoder is NULL");
@@ -72,7 +78,7 @@ bool AudioFilePlayer::startPlay() {
         return false;
     }
 
-    return false;
+
 }
 
 void AudioFilePlayer::stopPlay() {
@@ -87,12 +93,86 @@ void AudioFilePlayer::stopPlay() {
 }
 
 void AudioFilePlayer::seekTo(int64_t position) {
-//    if(audioPlayer != NULL && decoder != NULL)
-//    {
-//        decoder->seekTo(position);
-//    }else if(audioPlayer == NULL){
-//        LOGE("audioPlayer is NULL");
-//    }else{
-//        LOGE("decoder is NULL");
-//    }
+    if(audioPlayer != NULL && decoder != NULL)
+    {
+        decoder->seekTo(position);
+    }else if(audioPlayer == NULL){
+        LOGE("audioPlayer is NULL");
+    }else{
+        LOGE("decoder is NULL");
+    }
+}
+
+void AudioFilePlayer::setStateCallback(PlayStateChangedCallback callback) {
+    if(audioPlayer == NULL)
+    {
+        LOGE("audio player is NULL when set state callback");
+        return;
+    }
+    audioPlayer->setPlayStateChangedCallback(callback);
+}
+
+void AudioFilePlayer::setInfoGetCallback(InfoGetCallback callback) {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when set information get callback");
+        return;
+    }
+    decoder->setInfoGetCallback(callback);
+}
+
+void AudioFilePlayer::setProgressChangedCallback(ProgressChangedCallback callback) {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when set progress changed callback");
+        return;
+    }
+    decoder->setProgressChangedCallback(callback);
+}
+
+void AudioFilePlayer::removeStateCallback() {
+    if(audioPlayer == NULL)
+    {
+        LOGE("audio player is NULL when remove state callback");
+        return;
+    }
+    audioPlayer->removePlayStateChangedCallback();
+}
+
+void AudioFilePlayer::removeInfoGetCallback() {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when remove information get callback");
+        return;
+    }
+    decoder->removeInfoGetCallback();
+}
+
+void AudioFilePlayer::removeProgressChangedCallback() {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when remove progress changed callback");
+        return;
+    }
+    decoder->removeProgressChangedCallback();
+}
+
+const int8_t* AudioFilePlayer::getPicData() {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when get pic buffer");
+        return NULL;
+    }
+
+    return decoder->getPicData();
+}
+
+int AudioFilePlayer::getPicBufferLen() {
+    if(decoder == NULL)
+    {
+        LOGE("file decoder is NULL when get pic buffer len");
+        return NULL;
+    }
+
+    return decoder->getPicBufferLen();
 }

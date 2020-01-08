@@ -12,6 +12,8 @@
 
 using namespace std;
 
+#define MAX_FILE_PATH_LEN 200
+
 class AudioFilePlayer {
 public:
     AudioFilePlayer();
@@ -23,9 +25,23 @@ public:
     void stopPlay();
     void seekTo(int64_t position);
 
+    void setStateCallback(PlayStateChangedCallback callback);
+    void setInfoGetCallback(InfoGetCallback callback);
+    void setProgressChangedCallback(ProgressChangedCallback callback);
+
+    void removeStateCallback();
+    void removeInfoGetCallback();
+    void removeProgressChangedCallback();
+
+    const int8_t *getPicData();
+
+    int getPicBufferLen();
+
 private:
     AudioFileDecoder2 *decoder = NULL;
     SLAudioPlayer *audioPlayer = NULL;
+
+    char *currentFile = NULL;
 };
 
 

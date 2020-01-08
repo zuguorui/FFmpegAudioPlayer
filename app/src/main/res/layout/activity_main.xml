@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.7"
+        app:layout_constraintGuide_percent="0.6"
         android:id="@+id/gl"/>
     <androidx.recyclerview.widget.RecyclerView
         app:layout_constraintTop_toTopOf="parent"
@@ -38,16 +38,28 @@
         app:layout_constraintTop_toTopOf="@id/sb_progress"
         app:layout_constraintBottom_toBottomOf="@id/sb_progress"
         app:layout_constraintRight_toRightOf="parent"
-        android:id="@+id/tv_duration"/>
+        android:id="@+id/tv_duration1"/>
 
     <SeekBar
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/gl"
         app:layout_constraintLeft_toRightOf="@id/tv_position"
-        app:layout_constraintRight_toLeftOf="@id/tv_duration"
+        app:layout_constraintRight_toLeftOf="@id/tv_duration1"
         android:id="@+id/sb_progress"
         android:layout_marginTop="10dp"/>
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/iv_pic"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sb_progress"
+        app:layout_constraintBottom_toTopOf="@id/btn_play"
+        android:layout_margin="10dp"
+        app:layout_constraintDimensionRatio="W,1:1"/>
+
 
     <Button
         android:layout_width="wrap_content"

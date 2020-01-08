@@ -162,6 +162,10 @@ void SLAudioPlayer::releasePlayer() {
     if(playerPlay != NULL)
     {
         (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_STOPPED);
+        if(stateCallback != NULL)
+        {
+            stateCallback(false);
+        }
         playerPlay = NULL;
         (*playerObject)->Destroy(playerObject);
         playerObject = NULL;
@@ -174,6 +178,14 @@ void SLAudioPlayer::releasePlayer() {
     }
 }
 
+void SLAudioPlayer::setPlayStateChangedCallback(PlayStateChangedCallback callback) {
+    stateCallback = callback;
+}
+
+void SLAudioPlayer::removePlayStateChangedCallback() {
+    stateCallback = NULL;
+}
+
 bool SLAudioPlayer::play() {
     if(playerPlay == NULL)
     {
@@ -182,6 +194,10 @@ bool SLAudioPlayer::play() {
 
     SLresult result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_PLAYING);
 
+    if(stateCallback != NULL)
+    {
+        stateCallback(true);
+    }
     return result == SL_RESULT_SUCCESS;
 }
 
@@ -191,6 +207,10 @@ bool SLAudioPlayer::stop() {
         return false;
     }
     SLresult result = (*playerPlay)->SetPlayState(playerPlay, SL_PLAYSTATE_STOPPED);
+    if(stateCallback != NULL)
+    {
+        stateCallback(false);
+    }
     return result == SL_RESULT_SUCCESS;
 }
 

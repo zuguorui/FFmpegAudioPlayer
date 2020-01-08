@@ -9,9 +9,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.zu.ffmpegaudioplayer.data.AudioFile
 import java.text.SimpleDateFormat
 
-fun formatDuration(duration: Int): String
+fun formatDuration(duration: Long): String
 {
-    val totalSeconds: Int = (duration / 1000)
+    val totalSeconds: Int = (duration / 1000).toInt()
     val totalMinutes = totalSeconds / 60
     val seconds: Int = totalSeconds % 60
     val minutes: Int = totalMinutes % 60
@@ -63,7 +63,7 @@ class SongListAdapter: RecyclerView.Adapter<SongListItem>()
         }
 
         holder.tvName.text = data!![position].fileName
-        holder.tvDuration.text = formatDuration(data!![position].duration!!)
+        holder.tvDuration.text = formatDuration(data!![position].duration!!.toLong())
         holder.itemView.tag = position
 
         holder.itemView.setOnClickListener(internalItemClickerListener)

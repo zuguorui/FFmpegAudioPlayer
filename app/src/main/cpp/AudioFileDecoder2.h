@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <thread>
 #include <list>
+#include "AACUtil.h"
 extern "C"
 {
 #include "libavcodec/avcodec.h"
@@ -25,8 +26,16 @@ extern "C"
 
 using namespace std;
 
+/**
+ * Audio file decoder, it is also responsible for update audio duration, attached pic and current play position.
+ * All time unit is millisecond(ms)
+ * */
+
+typedef void (*InfoGetCallback)(int64_t, int32_t);
+typedef void (*ProgressChangedCallback)(int64_t, bool);
+
 typedef struct {
-    long currentPosition;
+    int64_t pts;
     int sampleCount;
     int16_t *buffer;
 }PCMBufferNode;
@@ -39,16 +48,34 @@ enum DecodeState
     FINISHED
 };
 
+enum FileDecodeState
+{
+    DECODING,
+    DECODING_FINISHED,
+    INIT_COMPONENT_FAILED
+};
+
 class AudioFileDecoder2: public IAudioDataProvider {
 public:
     AudioFileDecoder2();
     ~AudioFileDecoder2();
     void openFile(const char *inputFile);
     void closeInput();
-
+    void setInfoGetCallback(InfoGetCallback callback);
+    void setProgressChangedCallback(ProgressChangedCallback callback);
+    void removeInfoGetCallback();
+    void removeProgressChangedCallback();
     void getAudioData(int16_t *audioData, int *sampleCount);
     void decode();
 
+    int getPicBufferLen();
+
+    const int8_t *getPicData();
+
+    void seekTo(int64_t position); //ms
+
+    int64_t progressUpdateInterval = 1000;
+    int64_t oldPosition = 0;
 
 
 private:
@@ -60,10 +87,8 @@ private:
 
     thread *decodeThread = NULL;
 
-//    inline PCMBufferNode* getFreeNode();
-//    inline PCMBufferNode* getDataNode();
-//    inline void putNodeToDeque(PCMBufferNode *node);
-//    inline void putNodeToUsedDeque(PCMBufferNode *node);
+    inline PCMBufferNode* getFreeNode();
+
 
     uint8_t *picBuffer = NULL;
     int picBufferLen = 0;
@@ -97,14 +122,18 @@ private:
 
     list<PCMBufferNode *> buffers;
     list<PCMBufferNode *> usedBuffers;
-    PCMBufferNode *usingNode = NULL;
 
-    DecodeState decodeState;
+    FileDecodeState fileDecodeState;
 
     int64_t seekTarget = 0;
     bool seekReq = false;
 
     bool stopFlag = false;
+
+    InfoGetCallback infoGetCallback = NULL;
+    ProgressChangedCallback progressChangedCallback = NULL;
+
+    void discardAllDecodedData();
 };
 
 

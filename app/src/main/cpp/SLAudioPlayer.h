@@ -15,6 +15,8 @@
 
 using namespace std;
 
+typedef void (*PlayStateChangedCallback)(bool);
+
 class SLAudioPlayer {
 public:
     SLAudioPlayer();
@@ -28,6 +30,10 @@ public:
     void removeDataProvider(IAudioDataProvider *provider);
 
     void processAudio();
+
+    void setPlayStateChangedCallback(PlayStateChangedCallback callback);
+    void removePlayStateChangedCallback();
+
 private:
     SLObjectItf engineObject = NULL;
     SLEngineItf engineEngine;
@@ -50,6 +56,7 @@ private:
 
     int16_t *buffer = NULL;
 
+    PlayStateChangedCallback stateCallback = NULL;
 };
 
 
