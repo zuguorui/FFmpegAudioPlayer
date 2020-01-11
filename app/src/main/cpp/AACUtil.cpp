@@ -2,6 +2,14 @@
 // Created by incus-pc-2 on 2020/1/7.
 //
 
+/**
+ * See blog
+ * https://blog.csdn.net/u013470102/article/details/80880079
+ * and
+ * https://blog.csdn.net/zhangrui_fslib_org/article/details/50756640
+ *
+ * */
+
 #include "AACUtil.h"
 #include <stdio.h>
 #include <string.h>
