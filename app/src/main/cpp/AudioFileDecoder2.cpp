@@ -223,6 +223,8 @@ bool AudioFileDecoder2::initComponents(const char* inputFileName) {
         duration = (int64_t)(audioStream->duration * av_q2d(audioStream->time_base) * 1000);
     }
 
+//    duration = formatCtx->duration / AV_TIME_BASE * 1000;
+
 
     LOGD("Duration is %ld ms", duration);
 
