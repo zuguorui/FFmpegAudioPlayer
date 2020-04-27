@@ -151,7 +151,7 @@ bool SLAudioPlayer::createPlayer() {
     }
 
 
-
+    //主动Enqueue一次buffer，OpenSLES才会主动向我们请求数据
     (*playerBufferQueue)->Enqueue(playerBufferQueue, buffer, MAX_SAMPLE_COUNT * 2 * sizeof(int16_t));
 
 
